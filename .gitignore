@@ -1,2 +1,5 @@
 *.DS_Store
 bazel-*
+bin/log/
+bin/v2ctl
+bin/v2ray
