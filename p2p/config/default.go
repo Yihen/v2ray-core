@@ -33,8 +33,8 @@ var defaultSocksConfig = SocksConfiguration{
 var defaultP2PConfig = P2PConfiguration{
 	Address: Address{
 		Protocol: "tcp",
-		IP:       "",
-		Port:     1,
+		IP:       "127.0.0.1",
+		Port:     5166,
 		PubID:    ""},
 	GRPCPort:   55051,
 	NetworkID:  0,

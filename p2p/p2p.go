@@ -26,6 +26,7 @@ import (
 	"github.com/libp2p/go-tcp-transport"
 	ws "github.com/libp2p/go-ws-transport"
 	"github.com/multiformats/go-multiaddr"
+	"v2ray.com/core/p2p/grpc"
 )
 
 const DefaultSleepInterval = 100 * time.Millisecond
@@ -124,8 +125,13 @@ func NewP2PNode() *P2PNode {
 	return &P2PNode{ctx: context.Background()}
 }
 
+func (this *P2PNode)StartGrpcServer()  {
+	go grpc.GRpcServiceStart(this)
+}
+
 func (this *P2PNode) StartService() {
 	this.StartListen(config.Parameters.P2P.Address.Protocol, config.Parameters.P2P.Address.IP, config.Parameters.P2P.Address.Port, make(chan struct{}))
 	this.Protocols.StartSeedlistGossipPubSub(this.ctx, this.Host)
 	this.Bootstrap()
+	this.StartGrpcServer()
 }

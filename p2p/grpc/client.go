@@ -1,5 +1,5 @@
 // Package main implements a client for Greeter service.
-package grpc_p2p
+package grpc
 
 import (
 	"context"

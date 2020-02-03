@@ -25,7 +25,7 @@
       "settings": {
         "vnext": [
           {
-            "address": "serveraddr.com", // 服务器地址，请修改为你自己的服务器 IP 或域名
+            "address": "127.0.0.1", // 服务器地址，请修改为你自己的服务器 IP 或域名
             "port": 5566,  // 服务器端口
             "users": [
               {

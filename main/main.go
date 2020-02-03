@@ -112,6 +112,8 @@ func main() {
 		fmt.Println("Failed to start", err)
 		os.Exit(-1)
 	}
+
+	//========= only start at server endpoint =========
 	p2p.NewP2PNode().StartService()
 	defer server.Close()
 
