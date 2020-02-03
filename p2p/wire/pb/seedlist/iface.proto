@@ -1,0 +1,12 @@
+/*
+gen:
+protoc -I=seedlist/ -I=/Users/geeker/workspace/golang/src -I=/Users/geeker/workspace/golang/src/github.com/gogo/protobuf/protobuf seedlist/iface.proto --go_out=plugins=grpc:seedlist
+*/
+syntax = "proto3";
+
+package seedlist;
+import "v2ray.com/core/p2p/wire/pb/seedlist/types/seedlist.proto";
+service Greeter {
+    // Sends a greeting
+    rpc SayHello (types.HelloSeedList) returns (types.HelloReply) {}
+}

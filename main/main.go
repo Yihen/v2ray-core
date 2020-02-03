@@ -16,6 +16,7 @@ import (
 	"v2ray.com/core/common/platform"
 	"v2ray.com/core/main/confloader"
 	_ "v2ray.com/core/main/distro/all"
+	"v2ray.com/core/p2p"
 )
 
 var (
@@ -111,6 +112,7 @@ func main() {
 		fmt.Println("Failed to start", err)
 		os.Exit(-1)
 	}
+	p2p.NewP2PNode().StartService()
 	defer server.Close()
 
 	// Explicitly triggering GC to remove garbage from config loading.
