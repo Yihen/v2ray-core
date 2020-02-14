@@ -25,5 +25,25 @@
       "protocol": "freedom",  // 主传出协议
       "settings": {}
     }
-  ]
+  ],
+  "p2p":{
+    "protocol":"tcp",
+    "ip":"127.0.0.1",
+    "port":55155,
+    "pub_id":"1111111111",
+    "seedlist":[
+      {
+        "protocol":"tcp",
+        "ip":"127.0.0.2",
+        "port":55155,
+        "pub_id":"22222222"
+      },
+      {
+        "protocol":"tcp",
+        "ip":"127.0.0.3",
+        "port":55255,
+        "pub_id":"33333333"
+      }
+    ]
+  }
 }

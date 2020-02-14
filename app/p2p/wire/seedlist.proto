@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 
-package types;
+package wire;
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 
@@ -67,8 +67,4 @@ message HelloSeedList {
     ActionType action = 1;
     SeedInfo  seed = 2;
     string nonce = 3;
-}
-
-message HelloReply{
-    string nonce = 1;
 }

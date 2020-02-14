@@ -75,7 +75,7 @@ func loadProtobufConfig(input io.Reader) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := proto.Unmarshal(data, config); err != nil {
+	if err := proto.Unmarshal(data, config); err != nil { //ERROR Panic
 		return nil, err
 	}
 	return config, nil

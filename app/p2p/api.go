@@ -11,12 +11,6 @@ import (
 
 	"time"
 
-	"v2ray.com/core/p2p/channels"
-	"v2ray.com/core/p2p/config"
-	"v2ray.com/core/p2p/account"
-	"v2ray.com/core/p2p/protocol"
-	"v2ray.com/core/p2p/protocol/seedlist"
-	"v2ray.com/core/p2p/wire/pb/seedlist/types"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -26,7 +20,11 @@ import (
 	"github.com/libp2p/go-tcp-transport"
 	ws "github.com/libp2p/go-ws-transport"
 	"github.com/multiformats/go-multiaddr"
-	"v2ray.com/core/p2p/grpc"
+	"v2ray.com/core/app/p2p/account"
+	"v2ray.com/core/app/p2p/grpc"
+	"v2ray.com/core/app/p2p/protocol"
+	"v2ray.com/core/app/p2p/protocol/seedlist"
+	"v2ray.com/core/app/p2p/wire"
 )
 
 const DefaultSleepInterval = 100 * time.Millisecond
@@ -34,9 +32,9 @@ const DefaultSleepInterval = 100 * time.Millisecond
 type gRpcService struct{}
 
 // SayHello implements helloworld.GreeterServer
-func (s *gRpcService) SayHello(ctx context.Context, in *types.HelloSeedList) (*types.HelloReply, error) {
+func (s *gRpcService) SayHello(ctx context.Context, in *wire.HelloSeedList) (*wire.HelloReply, error) {
 	fmt.Printf("Received: %v", in.Action)
-	return &types.HelloReply{}, nil
+	return &wire.HelloReply{}, nil
 }
 
 type P2PNode struct {
@@ -44,14 +42,15 @@ type P2PNode struct {
 	Host      core.Host
 	Protocols protocol.Protocol
 	ctx       context.Context
+	Config    *Config
 }
 
 func (this *P2PNode) DoSeedListRequest(pid peer.ID) {
 	this.Protocols.RequestSeedList(pid)
 }
 
-func (this *P2PNode) onceBootstrap(seed config.Address) peer.ID {
-	targetAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/%s/%s/%d/p2p/%s", seed.IP, seed.Protocol, seed.Port, seed.PubID))
+func (this *P2PNode) onceBootstrap(seed *Seed) peer.ID {
+	targetAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/%s/%s/%d/p2p/%s", seed.Ip, seed.Protocol, seed.Port, seed.PubId))
 	if err != nil {
 		panic(err)
 	}
@@ -70,22 +69,22 @@ func (this *P2PNode) onceBootstrap(seed config.Address) peer.ID {
 }
 
 func (this *P2PNode) Bootstrap() {
-	for _, seed := range config.Parameters.P2P.SeedList {
-		fmt.Println("bootstrap once start:", seed.PubID, seed.Port, seed.Protocol, seed.IP)
+	for _, seed := range this.Config.Seedlist {
+		fmt.Println("bootstrap once start:", seed.PubId, seed.Port, seed.Protocol, seed.Ip)
+		continue
 		this.onceBootstrap(seed)
-
-		channels.SeedlistNotice <- types.HelloSeedList{
-			Action: types.ActionType_SEED_ONLINE,
-			Seed: &types.SeedInfo{
-				Protocol: config.Parameters.P2P.Address.Protocol,
-				Ip:       config.Parameters.P2P.Address.IP,
-				Port:     int32(config.Parameters.P2P.Address.Port),
-				HostID:   this.Host.ID().Pretty(),
-			}}
 	}
+	wire.SeedlistNotice <- wire.HelloSeedList{
+		Action: wire.ActionType_SEED_ONLINE,
+		Seed: &wire.SeedInfo{
+			Protocol: this.Config.Protocol,
+			Ip:       this.Config.Ip,
+			Port:     this.Config.Port,
+			HostID:   this.Host.ID().Pretty(),
+		}}
 }
 
-func (this *P2PNode) StartListen(protocol string, ip string, port int, done chan struct{}) {
+func (this *P2PNode) StartListen(done chan struct{}) {
 	p := account.GetAccount().GetPrivKey()
 
 	transports := libp2p.ChainOptions(
@@ -94,7 +93,7 @@ func (this *P2PNode) StartListen(protocol string, ip string, port int, done chan
 	)
 
 	listenAddrs := libp2p.ListenAddrStrings(
-		fmt.Sprintf("/ip4/%s/%s/%d", ip, protocol, port),
+		fmt.Sprintf("/ip4/%s/%s/%d", this.Config.Ip, this.Config.Protocol, this.Config.Port),
 	)
 
 	muxers := libp2p.ChainOptions(
@@ -121,16 +120,18 @@ func (this *P2PNode) StartListen(protocol string, ip string, port int, done chan
 	fmt.Println("host.ID:", this.Host.ID().Pretty())
 }
 
-func NewP2PNode() *P2PNode {
-	return &P2PNode{ctx: context.Background()}
+func NewP2PNode(config *Config) *P2PNode {
+	return &P2PNode{
+		ctx:    context.Background(),
+		Config: config}
 }
 
-func (this *P2PNode)StartGrpcServer()  {
-	go grpc.GRpcServiceStart(this)
+func (this *P2PNode) StartGrpcServer() {
+	go grpc.ServiceStart(this)
 }
 
 func (this *P2PNode) StartService() {
-	this.StartListen(config.Parameters.P2P.Address.Protocol, config.Parameters.P2P.Address.IP, config.Parameters.P2P.Address.Port, make(chan struct{}))
+	this.StartListen(make(chan struct{}))
 	this.Protocols.StartSeedlistGossipPubSub(this.ctx, this.Host)
 	this.Bootstrap()
 	this.StartGrpcServer()

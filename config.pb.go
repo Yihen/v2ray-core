@@ -2,8 +2,9 @@ package core
 
 import (
 	fmt "fmt"
-	proto "github.com/golang/protobuf/proto"
 	math "math"
+
+	proto "github.com/golang/protobuf/proto"
 	serial "v2ray.com/core/common/serial"
 	transport "v2ray.com/core/transport"
 )

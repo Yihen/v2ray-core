@@ -31,8 +31,6 @@ message Config {
   // V2Ray will ignore such config during initialization.
   repeated v2ray.core.common.serial.TypedMessage extension = 6;
 
-  //v2ray.com server will connect to each other by p2p network
-  P2PConfig p2p = 7;
 }
 
 // InboundHandlerConfig is the configuration for inbound handler.
@@ -57,10 +55,4 @@ message OutboundHandlerConfig {
   int64 expire = 4;
   // Comment of this outbound handler. Not used for now.
   string comment = 5;
-}
-
-message P2PConfig{
-  string protocol = 1;
-  string ip = 2;
-  string port = 3;
 }

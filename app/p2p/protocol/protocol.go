@@ -5,7 +5,7 @@
  */
 package protocol
 
-import "v2ray.com/core/p2p/protocol/seedlist"
+import "v2ray.com/core/app/p2p/protocol/seedlist"
 
 type Protocol struct {
 	*seedlist.SeedListProtocol

@@ -3,3 +3,5 @@ bazel-*
 bin/log/
 bin/v2ctl
 bin/v2ray
+bin/nodes
+bin/db

@@ -7,11 +7,11 @@ import (
 	"log"
 	"time"
 
-	"v2ray.com/core/p2p/wire/pb/seedlist/types"
 	"github.com/google/uuid"
 	"github.com/libp2p/go-libp2p-core"
 	"github.com/libp2p/go-libp2p-core/peer"
 	protobufCodec "github.com/multiformats/go-multicodec/protobuf"
+	"v2ray.com/core/app/p2p/wire"
 )
 
 // pattern: /protocol-name/request-or-response-message/version
@@ -28,8 +28,8 @@ type Seed struct {
 }
 
 type SeedListProtocol struct {
-	node        *SeedNode                         // local host
-	requests    map[string]*types.SeedListRequest // used to access request data from response handlers
+	node        *SeedNode                        // local host
+	requests    map[string]*wire.SeedListRequest // used to access request data from response handlers
 	quit        chan struct{}
 	workSeed    []Seed //read from local seedlist file and add from newSeed slic
 	newSeed     []Seed // new seed from neighbor node sent
@@ -50,7 +50,7 @@ func NewSeedNode(host core.Host, done chan struct{}) *SeedNode {
 }
 
 func NewSeedListProtocol(node *SeedNode, done chan struct{}) *SeedListProtocol {
-	p := &SeedListProtocol{node: node, requests: make(map[string]*types.SeedListRequest), quit: done}
+	p := &SeedListProtocol{node: node, requests: make(map[string]*wire.SeedListRequest), quit: done}
 	node.SetStreamHandler(seedRequest, p.onSeedListRequest)
 	node.SetStreamHandler(seedResponse, p.onSeedListResponse)
 	return p
@@ -60,7 +60,7 @@ func NewSeedListProtocol(node *SeedNode, done chan struct{}) *SeedListProtocol {
 func (seed *SeedListProtocol) onSeedListRequest(s core.Stream) {
 
 	// get request data
-	data := &types.SeedListRequest{}
+	data := &wire.SeedListRequest{}
 	decoder := protobufCodec.Multicodec(nil).Decoder(bufio.NewReader(s))
 	err := decoder.Decode(data)
 	if err != nil {
@@ -76,7 +76,7 @@ func (seed *SeedListProtocol) onSeedListRequest(s core.Stream) {
 	}
 
 	// generate response message
-	resp := &types.SeedListResponse{MessageData: NewMessageData(seed.node, data.MessageData.Id, false),
+	resp := &wire.SeedListResponse{MessageData: NewMessageData(seed.node, data.MessageData.Id, false),
 		Message: fmt.Sprintf("Ping response from %s", seed.node.ID())}
 
 	// sign the data
@@ -108,7 +108,7 @@ func (seed *SeedListProtocol) onSeedListRequest(s core.Stream) {
 
 // remote ping response handler
 func (seed *SeedListProtocol) onSeedListResponse(s core.Stream) {
-	data := &types.SeedListResponse{}
+	data := &wire.SeedListResponse{}
 	decoder := protobufCodec.Multicodec(nil).Decoder(bufio.NewReader(s))
 	err := decoder.Decode(data)
 	if err != nil {
@@ -140,7 +140,7 @@ func (seed *SeedListProtocol) RequestSeedList(pid peer.ID) bool {
 	log.Printf("%s: Sending seedlist request to: %s....", seed.node.ID(), pid)
 
 	// create message data
-	req := &types.SeedListRequest{MessageData: NewMessageData(seed.node, uuid.New().String(), false),
+	req := &wire.SeedListRequest{MessageData: NewMessageData(seed.node, uuid.New().String(), false),
 		Message: fmt.Sprintf("Request Seedlist from %s", seed.node.ID())}
 
 	// sign the data

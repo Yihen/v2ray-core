@@ -21,6 +21,7 @@ import (
 	_ "v2ray.com/core/app/reverse"
 	_ "v2ray.com/core/app/router"
 	_ "v2ray.com/core/app/stats"
+	_ "v2ray.com/core/app/p2p"
 
 	// Inbound and outbound proxies.
 	_ "v2ray.com/core/proxy/blackhole"

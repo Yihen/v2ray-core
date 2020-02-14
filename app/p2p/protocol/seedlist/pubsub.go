@@ -10,11 +10,10 @@ import (
 	"fmt"
 	"os"
 
-	"v2ray.com/core/p2p/channels"
-	"v2ray.com/core/p2p/wire/pb/seedlist/types"
 	"github.com/libp2p/go-libp2p-core"
 	"github.com/libp2p/go-libp2p-pubsub"
-	"v2ray.com/core/p2p/grpc"
+	"v2ray.com/core/app/p2p/grpc"
+	"v2ray.com/core/app/p2p/wire"
 )
 
 const seedlistTopic = "/seedlist/pubsub/0.0.1/notice"
@@ -29,13 +28,13 @@ func seedlistSubscribeHandle(ctx context.Context, sub *pubsub.Subscription) {
 				continue
 			}
 
-			seed := &types.HelloSeedList{}
+			seed := &wire.HelloSeedList{}
 			err = seed.Unmarshal(msg.Data)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				continue
 			}
-			grpc.GRpcClientStart(seed)
+			grpc.ClientStart(seed)
 			fmt.Println("subscribe receive:", seed.GetAction(), ", data:", seed.Seed, "from:", fmt.Sprintf("%s", msg.GetFrom()))
 
 		case <-ctx.Done():
@@ -47,7 +46,7 @@ func seedlistSubscribeHandle(ctx context.Context, sub *pubsub.Subscription) {
 func seedlistPublishHandle(ctx context.Context, ps *pubsub.PubSub) {
 	for {
 		select {
-		case seedInfo := <-channels.SeedlistNotice:
+		case seedInfo := <-wire.SeedlistNotice:
 			msgBytes, err := seedInfo.Marshal()
 			if err != nil {
 				fmt.Printf("seed Marshal err:%s", err.Error())
