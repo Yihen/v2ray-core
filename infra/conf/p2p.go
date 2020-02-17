@@ -11,10 +11,24 @@ import (
 
 func DefaultP2PConfig() *p2p.Config {
 	return &p2p.Config{
-		Ip:       "localhost",
+		Ip:       "127.0.0.1",
 		Port:     55155,
 		Protocol: "tcp",
-		PubId:    "default-pubid",
+		PubId:    "default-p2p-pub-id",
+		Seedlist: []*p2p.Seed{
+			{
+				Protocol: "tcp",
+				Ip:       "127.0.0.1",
+				Port:     55255,
+				PubId:    "seed1.pub.id",
+			},
+			{
+				Protocol: "tcp",
+				Ip:       "127.0.0.1",
+				Port:     55355,
+				PubId:    "seed2.pub.id",
+			},
+		},
 	}
 }
 

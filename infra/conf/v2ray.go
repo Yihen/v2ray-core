@@ -352,7 +352,7 @@ func (c *Config) Build() (*core.Config, error) {
 	if c.P2PConf != nil {
 		config.App = append(config.App, serial.ToTypedMessage(c.P2PConf.Build()))
 	} else {
-		config.App = append(config.App, serial.ToTypedMessage(DefaultP2PConfig()))
+		//config.App = append(config.App, serial.ToTypedMessage(DefaultP2PConfig()))
 	}
 
 	var logConfMsg *serial.TypedMessage
