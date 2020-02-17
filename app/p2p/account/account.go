@@ -6,13 +6,14 @@
 package account
 
 import (
-	"github.com/libp2p/go-libp2p-core/crypto"
-	"v2ray.com/core/store"
-	"github.com/syndtr/goleveldb/leveldb"
 	"fmt"
+
+	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/syndtr/goleveldb/leveldb"
+	"v2ray.com/core/store"
 )
 
-const DB_DIR="./db"
+const DB_DIR = "./db"
 
 type SocksDB struct {
 	db *store.LevelDBStore

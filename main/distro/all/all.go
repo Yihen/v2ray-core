@@ -17,11 +17,11 @@ import (
 	// Other optional features.
 	_ "v2ray.com/core/app/dns"
 	_ "v2ray.com/core/app/log"
+	_ "v2ray.com/core/app/p2p"
 	_ "v2ray.com/core/app/policy"
 	_ "v2ray.com/core/app/reverse"
 	_ "v2ray.com/core/app/router"
 	_ "v2ray.com/core/app/stats"
-	_ "v2ray.com/core/app/p2p"
 
 	// Inbound and outbound proxies.
 	_ "v2ray.com/core/proxy/blackhole"
