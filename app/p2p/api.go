@@ -8,7 +8,7 @@ package p2p
 import (
 	"context"
 	"fmt"
-
+	"sync"
 	"time"
 
 	"github.com/libp2p/go-libp2p"
@@ -29,12 +29,15 @@ import (
 
 const DefaultSleepInterval = 100 * time.Millisecond
 
-type gRpcService struct{}
+type gRpcService struct {
+	NeighborList sync.Map
+}
 
 // SayHello implements helloworld.GreeterServer
 func (s *gRpcService) SayHello(ctx context.Context, in *wire.HelloSeedList) (*wire.HelloReply, error) {
 	fmt.Printf("Received: %v", in.Action)
-	return &wire.HelloReply{}, nil
+	s.NeighborList.Store(in.Seed.HostID, in)
+	return &wire.HelloReply{}, nil //*wire.HelloReply must not be nil
 }
 
 type P2PNode struct {
