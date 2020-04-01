@@ -52,9 +52,9 @@ func nowMillisec() int64 {
 type RoundTripInfo struct {
 	sync.RWMutex
 	variation        uint32
-	srtt             uint32
-	rto              uint32
-	minRtt           uint32
+	srtt             uint32 // smooth round time, 平滑往返时间， 接收一个数据和发送一个数据的平均时间
+	rto              uint32 // retransmission Time-Out, 重传超时时间
+	minRtt           uint32 // Round Trip Time, 往返时间
 	updatedTimestamp uint32
 }
 
@@ -191,7 +191,7 @@ type Connection struct {
 	lastIncomingTime uint32
 	lastPingTime     uint32
 
-	mss       uint32
+	mss       uint32 //max segment size
 	roundTrip *RoundTripInfo
 
 	receivingWorker *ReceivingWorker

@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc"
 
 	logService "v2ray.com/core/app/log/command"
-	statsService "v2ray.com/core/app/stats/command"
 	"v2ray.com/core/common"
 )
 
@@ -93,7 +92,6 @@ func getServiceMethod(s string) (string, string) {
 type serviceHandler func(ctx context.Context, conn *grpc.ClientConn, method string, request string) (string, error)
 
 var serivceHandlerMap = map[string]serviceHandler{
-	"statsservice":  callStatsService,
 	"loggerservice": callLogService,
 }
 
@@ -107,43 +105,6 @@ func callLogService(ctx context.Context, conn *grpc.ClientConn, method string, r
 			return "", err
 		}
 		resp, err := client.RestartLogger(ctx, r)
-		if err != nil {
-			return "", err
-		}
-		return proto.MarshalTextString(resp), nil
-	default:
-		return "", errors.New("Unknown method: " + method)
-	}
-}
-
-func callStatsService(ctx context.Context, conn *grpc.ClientConn, method string, request string) (string, error) {
-	client := statsService.NewStatsServiceClient(conn)
-
-	switch strings.ToLower(method) {
-	case "getstats":
-		r := &statsService.GetStatsRequest{}
-		if err := proto.UnmarshalText(request, r); err != nil {
-			return "", err
-		}
-		resp, err := client.GetStats(ctx, r)
-		if err != nil {
-			return "", err
-		}
-		return proto.MarshalTextString(resp), nil
-	case "querystats":
-		r := &statsService.QueryStatsRequest{}
-		if err := proto.UnmarshalText(request, r); err != nil {
-			return "", err
-		}
-		resp, err := client.QueryStats(ctx, r)
-		if err != nil {
-			return "", err
-		}
-		return proto.MarshalTextString(resp), nil
-	case "getsysstats":
-		// SysStatsRequest is an empty message
-		r := &statsService.SysStatsRequest{}
-		resp, err := client.GetSysStats(ctx, r)
 		if err != nil {
 			return "", err
 		}

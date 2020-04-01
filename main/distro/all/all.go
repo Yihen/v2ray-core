@@ -12,28 +12,16 @@ import (
 	_ "v2ray.com/core/app/commander"
 	_ "v2ray.com/core/app/log/command"
 	_ "v2ray.com/core/app/proxyman/command"
-	_ "v2ray.com/core/app/stats/command"
 
 	// Other optional features.
 	_ "v2ray.com/core/app/dns"
 	_ "v2ray.com/core/app/log"
-	_ "v2ray.com/core/app/p2p"
-	_ "v2ray.com/core/app/policy"
-	_ "v2ray.com/core/app/reverse"
+	_ "v2ray.com/core/app/porter"
 	_ "v2ray.com/core/app/router"
-	_ "v2ray.com/core/app/stats"
 
 	// Inbound and outbound proxies.
-	_ "v2ray.com/core/proxy/blackhole"
 	_ "v2ray.com/core/proxy/dns"
 	_ "v2ray.com/core/proxy/dokodemo"
-	_ "v2ray.com/core/proxy/freedom"
-	_ "v2ray.com/core/proxy/http"
-	_ "v2ray.com/core/proxy/mtproto"
-	_ "v2ray.com/core/proxy/shadowsocks"
-	_ "v2ray.com/core/proxy/socks"
-	_ "v2ray.com/core/proxy/vmess/inbound"
-	_ "v2ray.com/core/proxy/vmess/outbound"
 
 	// Transports
 	_ "v2ray.com/core/transport/internet/domainsocket"

@@ -7,29 +7,16 @@ import (
 	"v2ray.com/core"
 	"v2ray.com/core/app/dispatcher"
 	"v2ray.com/core/app/proxyman"
-	"v2ray.com/core/app/stats"
 	"v2ray.com/core/common/serial"
 )
 
 var (
 	inboundConfigLoader = NewJSONConfigLoader(ConfigCreatorCache{
 		"dokodemo-door": func() interface{} { return new(DokodemoConfig) },
-		"http":          func() interface{} { return new(HttpServerConfig) },
-		"shadowsocks":   func() interface{} { return new(ShadowsocksServerConfig) },
-		"socks":         func() interface{} { return new(SocksServerConfig) },
-		"vmess":         func() interface{} { return new(VMessInboundConfig) },
-		"mtproto":       func() interface{} { return new(MTProtoServerConfig) },
 	}, "protocol", "settings")
 
 	outboundConfigLoader = NewJSONConfigLoader(ConfigCreatorCache{
-		"blackhole":   func() interface{} { return new(BlackholeConfig) },
-		"freedom":     func() interface{} { return new(FreedomConfig) },
-		"http":        func() interface{} { return new(HttpClientConfig) },
-		"shadowsocks": func() interface{} { return new(ShadowsocksClientConfig) },
-		"vmess":       func() interface{} { return new(VMessOutboundConfig) },
-		"socks":       func() interface{} { return new(SocksClientConfig) },
-		"mtproto":     func() interface{} { return new(MTProtoClientConfig) },
-		"dns":         func() interface{} { return new(DnsOutboundConfig) },
+		"dns": func() interface{} { return new(DnsOutboundConfig) },
 	}, "protocol", "settings")
 )
 
@@ -280,12 +267,6 @@ func (c *OutboundDetourConfig) Build() (*core.OutboundHandlerConfig, error) {
 	}, nil
 }
 
-type StatsConfig struct{}
-
-func (c *StatsConfig) Build() (*stats.Config, error) {
-	return &stats.Config{}, nil
-}
-
 type Config struct {
 	Port            uint16                 `json:"port"` // Port of this Point server. Deprecated.
 	LogConfig       *LogConfig             `json:"log"`
@@ -293,16 +274,9 @@ type Config struct {
 	DNSConfig       *DnsConfig             `json:"dns"`
 	InboundConfigs  []InboundDetourConfig  `json:"inbounds"`
 	OutboundConfigs []OutboundDetourConfig `json:"outbounds"`
-	InboundConfig   *InboundDetourConfig   `json:"inbound"`        // Deprecated.
-	OutboundConfig  *OutboundDetourConfig  `json:"outbound"`       // Deprecated.
-	InboundDetours  []InboundDetourConfig  `json:"inboundDetour"`  // Deprecated.
-	OutboundDetours []OutboundDetourConfig `json:"outboundDetour"` // Deprecated.
 	Transport       *TransportConfig       `json:"transport"`
-	Policy          *PolicyConfig          `json:"policy"`
 	Api             *ApiConfig             `json:"api"`
-	Stats           *StatsConfig           `json:"stats"`
-	Reverse         *ReverseConfig         `json:"reverse"`
-	P2PConf         *P2PConfig             `json:"p2p"`
+	PorterConfig    *PorterConfig          `json:"porter"`
 }
 
 func applyTransportConfig(s *StreamConfig, t *TransportConfig) {
@@ -341,18 +315,8 @@ func (c *Config) Build() (*core.Config, error) {
 		config.App = append(config.App, serial.ToTypedMessage(apiConf))
 	}
 
-	if c.Stats != nil {
-		statsConf, err := c.Stats.Build()
-		if err != nil {
-			return nil, err
-		}
-		config.App = append(config.App, serial.ToTypedMessage(statsConf))
-	}
-
-	if c.P2PConf != nil {
-		config.App = append(config.App, serial.ToTypedMessage(c.P2PConf.Build()))
-	} else {
-		//config.App = append(config.App, serial.ToTypedMessage(DefaultP2PConfig()))
+	if c.PorterConfig != nil {
+		config.App = append(config.App, serial.ToTypedMessage(c.PorterConfig.Build()))
 	}
 
 	var logConfMsg *serial.TypedMessage
@@ -381,31 +345,7 @@ func (c *Config) Build() (*core.Config, error) {
 		config.App = append(config.App, serial.ToTypedMessage(dnsApp))
 	}
 
-	if c.Policy != nil {
-		pc, err := c.Policy.Build()
-		if err != nil {
-			return nil, err
-		}
-		config.App = append(config.App, serial.ToTypedMessage(pc))
-	}
-
-	if c.Reverse != nil {
-		r, err := c.Reverse.Build()
-		if err != nil {
-			return nil, err
-		}
-		config.App = append(config.App, serial.ToTypedMessage(r))
-	}
-
 	var inbounds []InboundDetourConfig
-
-	if c.InboundConfig != nil {
-		inbounds = append(inbounds, *c.InboundConfig)
-	}
-
-	if len(c.InboundDetours) > 0 {
-		inbounds = append(inbounds, c.InboundDetours...)
-	}
 
 	if len(c.InboundConfigs) > 0 {
 		inbounds = append(inbounds, c.InboundConfigs...)
@@ -434,14 +374,6 @@ func (c *Config) Build() (*core.Config, error) {
 	}
 
 	var outbounds []OutboundDetourConfig
-
-	if c.OutboundConfig != nil {
-		outbounds = append(outbounds, *c.OutboundConfig)
-	}
-
-	if len(c.OutboundDetours) > 0 {
-		outbounds = append(outbounds, c.OutboundDetours...)
-	}
 
 	if len(c.OutboundConfigs) > 0 {
 		outbounds = append(outbounds, c.OutboundConfigs...)

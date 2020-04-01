@@ -7,6 +7,7 @@ package dokodemo
 import (
 	"context"
 	"sync/atomic"
+
 	"time"
 
 	"v2ray.com/core"
@@ -17,7 +18,6 @@ import (
 	"v2ray.com/core/common/session"
 	"v2ray.com/core/common/signal"
 	"v2ray.com/core/common/task"
-	"v2ray.com/core/features/policy"
 	"v2ray.com/core/features/routing"
 	"v2ray.com/core/transport/internet"
 )
@@ -25,29 +25,27 @@ import (
 func init() {
 	common.Must(common.RegisterConfig((*Config)(nil), func(ctx context.Context, config interface{}) (interface{}, error) {
 		d := new(DokodemoDoor)
-		err := core.RequireFeatures(ctx, func(pm policy.Manager) error {
-			return d.Init(config.(*Config), pm)
+		err := core.RequireFeatures(ctx, func() error {
+			return d.Init(config.(*Config))
 		})
 		return d, err
 	}))
 }
 
 type DokodemoDoor struct {
-	policyManager policy.Manager
-	config        *Config
-	address       net.Address
-	port          net.Port
+	config  *Config
+	address net.Address
+	port    net.Port
 }
 
 // Init initializes the DokodemoDoor instance with necessary parameters.
-func (d *DokodemoDoor) Init(config *Config, pm policy.Manager) error {
+func (d *DokodemoDoor) Init(config *Config) error {
 	if (config.NetworkList == nil || len(config.NetworkList.Network) == 0) && len(config.Networks) == 0 {
 		return newError("no network specified")
 	}
 	d.config = config
 	d.address = config.GetPredefinedAddress()
 	d.port = net.Port(config.Port)
-	d.policyManager = pm
 
 	return nil
 }
@@ -59,15 +57,6 @@ func (d *DokodemoDoor) Network() []net.Network {
 	}
 
 	return d.config.NetworkList.Network
-}
-
-func (d *DokodemoDoor) policy() policy.Session {
-	config := d.config
-	p := d.policyManager.ForLevel(config.UserLevel)
-	if config.Timeout > 0 && config.UserLevel == 0 {
-		p.Timeouts.ConnectionIdle = time.Duration(config.Timeout) * time.Second
-	}
-	return p
 }
 
 type hasHandshakeAddress interface {
@@ -106,11 +95,9 @@ func (d *DokodemoDoor) Process(ctx context.Context, network net.Network, conn in
 		}
 	}
 
-	plcy := d.policy()
 	ctx, cancel := context.WithCancel(ctx)
-	timer := signal.CancelAfterInactivity(ctx, cancel, plcy.Timeouts.ConnectionIdle)
+	timer := signal.CancelAfterInactivity(ctx, cancel, time.Duration(0))
 
-	ctx = policy.ContextWithBufferPolicy(ctx, plcy.Buffer)
 	link, err := dispatcher.Dispatch(ctx, dest)
 	if err != nil {
 		return newError("failed to dispatch request").Base(err)
@@ -120,7 +107,7 @@ func (d *DokodemoDoor) Process(ctx context.Context, network net.Network, conn in
 	requestDone := func() error {
 		defer func() {
 			if atomic.AddInt32(&requestCount, -1) == 0 {
-				timer.SetTimeout(plcy.Timeouts.DownlinkOnly)
+				timer.SetTimeout(time.Duration(0))
 			}
 		}()
 
@@ -168,7 +155,7 @@ func (d *DokodemoDoor) Process(ctx context.Context, network net.Network, conn in
 			tproxyRequest = func() error {
 				defer func() {
 					if atomic.AddInt32(&requestCount, -1) == 0 {
-						timer.SetTimeout(plcy.Timeouts.DownlinkOnly)
+						timer.SetTimeout(time.Duration(0))
 					}
 				}()
 				if err := buf.Copy(tReader, link.Writer, buf.UpdateActivity(timer)); err != nil {
@@ -180,7 +167,7 @@ func (d *DokodemoDoor) Process(ctx context.Context, network net.Network, conn in
 	}
 
 	responseDone := func() error {
-		defer timer.SetTimeout(plcy.Timeouts.UplinkOnly)
+		defer timer.SetTimeout(time.Duration(0))
 
 		if err := buf.Copy(link.Reader, writer, buf.UpdateActivity(timer)); err != nil {
 			return newError("failed to transport response").Base(err)

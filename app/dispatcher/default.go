@@ -15,12 +15,9 @@ import (
 	"v2ray.com/core/common/buf"
 	"v2ray.com/core/common/log"
 	"v2ray.com/core/common/net"
-	"v2ray.com/core/common/protocol"
 	"v2ray.com/core/common/session"
 	"v2ray.com/core/features/outbound"
-	"v2ray.com/core/features/policy"
 	"v2ray.com/core/features/routing"
-	"v2ray.com/core/features/stats"
 	"v2ray.com/core/transport"
 	"v2ray.com/core/transport/pipe"
 )
@@ -92,15 +89,13 @@ func (r *cachedReader) Interrupt() {
 type DefaultDispatcher struct {
 	ohm    outbound.Manager
 	router routing.Router
-	policy policy.Manager
-	stats  stats.Manager
 }
 
 func init() {
 	common.Must(common.RegisterConfig((*Config)(nil), func(ctx context.Context, config interface{}) (interface{}, error) {
 		d := new(DefaultDispatcher)
-		if err := core.RequireFeatures(ctx, func(om outbound.Manager, router routing.Router, pm policy.Manager, sm stats.Manager) error {
-			return d.Init(config.(*Config), om, router, pm, sm)
+		if err := core.RequireFeatures(ctx, func(om outbound.Manager, router routing.Router) error {
+			return d.Init(config.(*Config), om, router)
 		}); err != nil {
 			return nil, err
 		}
@@ -109,11 +104,9 @@ func init() {
 }
 
 // Init initializes DefaultDispatcher.
-func (d *DefaultDispatcher) Init(config *Config, om outbound.Manager, router routing.Router, pm policy.Manager, sm stats.Manager) error {
+func (d *DefaultDispatcher) Init(config *Config, om outbound.Manager, router routing.Router) error {
 	d.ohm = om
 	d.router = router
-	d.policy = pm
-	d.stats = sm
 	return nil
 }
 
@@ -143,34 +136,6 @@ func (d *DefaultDispatcher) getLink(ctx context.Context) (*transport.Link, *tran
 	outboundLink := &transport.Link{
 		Reader: uplinkReader,
 		Writer: downlinkWriter,
-	}
-
-	sessionInbound := session.InboundFromContext(ctx)
-	var user *protocol.MemoryUser
-	if sessionInbound != nil {
-		user = sessionInbound.User
-	}
-
-	if user != nil && len(user.Email) > 0 {
-		p := d.policy.ForLevel(user.Level)
-		if p.Stats.UserUplink {
-			name := "user>>>" + user.Email + ">>>traffic>>>uplink"
-			if c, _ := stats.GetOrRegisterCounter(d.stats, name); c != nil {
-				inboundLink.Writer = &SizeStatWriter{
-					Counter: c,
-					Writer:  inboundLink.Writer,
-				}
-			}
-		}
-		if p.Stats.UserDownlink {
-			name := "user>>>" + user.Email + ">>>traffic>>>downlink"
-			if c, _ := stats.GetOrRegisterCounter(d.stats, name); c != nil {
-				outboundLink.Writer = &SizeStatWriter{
-					Counter: c,
-					Writer:  outboundLink.Writer,
-				}
-			}
-		}
 	}
 
 	return inboundLink, outboundLink
