@@ -303,6 +303,7 @@ type Config struct {
 	Stats           *StatsConfig           `json:"stats"`
 	Reverse         *ReverseConfig         `json:"reverse"`
 	P2PConf         *P2PConfig             `json:"p2p"`
+	RPCConf         *RPCConfig             `json:"rpc"`
 }
 
 func applyTransportConfig(s *StreamConfig, t *TransportConfig) {
@@ -353,6 +354,12 @@ func (c *Config) Build() (*core.Config, error) {
 		config.App = append(config.App, serial.ToTypedMessage(c.P2PConf.Build()))
 	} else {
 		//config.App = append(config.App, serial.ToTypedMessage(DefaultP2PConfig()))
+	}
+
+	if c.RPCConf != nil {
+		config.App = append(config.App, serial.ToTypedMessage(c.RPCConf.Build()))
+	} else {
+		config.App = append(config.App, serial.ToTypedMessage(DefaultRPCConfig()))
 	}
 
 	var logConfMsg *serial.TypedMessage

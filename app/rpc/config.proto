@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package v2ray.core.app.rpc;
+option csharp_namespace = "V2Ray.Core.App.Rpc";
+option go_package = "rpc";
+option java_package = "com.v2ray.core.app.rpc";
+option java_multiple_files = true;
+message config{
+    string protocol = 1;
+    string ip = 2;
+    int32 port = 3;
+}
